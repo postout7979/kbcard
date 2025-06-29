@@ -1,3 +1,6 @@
+![image](https://github.com/user-attachments/assets/606b24d3-f470-4b50-b606-192790fbc6fc)
+
+
 구성 요소
 
 VM 서비스 MySQL 8
