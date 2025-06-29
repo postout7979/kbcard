@@ -1,0 +1,12 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: redis-leader-pvc
+  namespace: guestbook
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: tanzu-storage-policy
+  resources:
+    requests:
+      storage: 2Gi
