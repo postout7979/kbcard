@@ -1,0 +1,59 @@
+cat << EOF > frontend-app.yaml
+apiVersion: v1
+kind: Secret
+metadata:  
+  name: frontend-app-secret
+  namespace: 3ta
+type: Opaque
+data:
+  api_url: <BASE64_ENCODED_IP:PORT_FOR_backend-app-service>
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-app-deployment
+  namespace: 3ta
+  labels:
+    app: frontend-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-app
+  template:
+    metadata:
+      labels:
+        app: frontend-app
+    spec:
+      containers:
+        - name: frontend-app
+          image: postout7979/developer-utilities-frontend
+          ports:
+            - containerPort: 5000
+          env:
+          - name: API_URL
+            valueFrom:
+              secretKeyRef:
+                name: frontend-app-secret
+                key: api_url
+                optional: false 
+#      imagePullSecrets:
+#      - name: docker-hub-creds
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-app-service
+  namespace: 3ta
+spec:
+  selector:
+    app: frontend-app
+  ports:
+    - name: web-app-port
+      protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: LoadBalancer
+EOF
