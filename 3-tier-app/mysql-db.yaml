@@ -1,0 +1,110 @@
+apiVersion: vmoperator.vmware.com/v1alpha1
+kind: VirtualMachine
+metadata:
+  labels:
+    vm.name: db-vm
+  name: mysql-db
+  namespace: kbcard
+spec:
+  imageName: vmi-7360314ef0704e0bf
+  className: best-effort-medium
+  powerState: poweredOn
+  storageClass: tanzu-storage-policy
+  networkInterfaces:
+  - networkName: vks-workload-01
+    networkType: vsphere-distributed
+  vmMetadata:
+    transport: CloudInit
+    secretName: my-vm-bootstrap-data
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-vm-bootstrap-data
+  namespace: kbcard
+stringData:
+  user-data: |
+    #cloud-config
+    ssh_pwauth: true
+
+    groups:
+      - admingroup: [root,sys]
+
+    users:
+      - name: devuser
+        gecos: Dev S. Ops
+        lock_passwd: false
+        # mkpasswd -m sha-512 VMware1!
+        passwd: $6$uQvh5Md4UBQM79d0$d7CszB7mrxaS3ewUvJ12lWz1g6qldsp1aZZ0SPbBO1YQq3yKPzeoZ7G8CNv319/9sgD7e2WbY2BqgDnJBMC.z.
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        groups: sudo, users, admin
+        shell: /bin/bash
+        ssh_pwauth: True
+    chpasswd:
+      list: |
+        root:VMware1!
+        devuser:VMware1!
+      expire: false
+
+    write_files:
+      - content: |
+           ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
+        append: true
+        path: alteruser.txt
+
+      - content: |
+           CREATE USER 'devops'@'%' IDENTIFIED WITH mysql_native_password BY 'password';
+           CREATE DATABASE demo;
+           GRANT ALL PRIVILEGES ON demo.* TO 'devops'@'%';
+
+           CREATE TABLE demo.user (
+             id INTEGER PRIMARY KEY AUTO_INCREMENT,
+             username varchar(255) NOT NULL,
+             password varchar(255) NOT NULL,
+             UNIQUE (username)
+           );
+
+
+           CREATE TABLE demo.entry (
+             id INTEGER PRIMARY KEY AUTO_INCREMENT,
+             author_id INTEGER NOT NULL,
+             created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+             title varchar(255) NOT NULL,
+             body varchar(5400) NOT NULL,
+             FOREIGN KEY (author_id) REFERENCES user (id)
+           );
+
+           INSERT INTO demo.user (username,password) VALUES('admin','admin');
+           INSERT INTO demo.entry (author_id,title,body) VALUES(1,"Welcome to the request page, this is the first entry This entry is owned by Jeremy and can only be modified by him. You can create your own post by registering and logging in!");
+
+        append: true
+        path: init.sql
+
+    runcmd:
+      - sudo hostname mysql-db
+      - sudo apt update
+      - sudo apt -y install mysql-server
+      - sudo systemctl start mysql.service
+      - sudo mysql < alteruser.txt
+      - mysql -u root -ppassword < init.sql
+      - sudo sed -i '0,/bind-address/s//#bind-address/' /etc/mysql/mysql.conf.d/mysqld.cnf
+      - sudo systemctl restart mysql.service
+---
+apiVersion: vmoperator.vmware.com/v1alpha1
+kind: VirtualMachineService
+metadata:
+  name: mysql-db
+  namespace: kbcard
+spec:
+  ports:
+  - name: ssh
+    port: 22
+    protocol: TCP
+    targetPort: 22
+  - name: mysql
+    port: 3306
+    protocol: TCP
+    targetPort: 3306
+  selector:
+    vm.name: db-vm
+  type: LoadBalancer
