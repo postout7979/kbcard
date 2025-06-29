@@ -5,7 +5,7 @@
 
 ### 00_VKS 아키텍처 소개, 구성 요소 소개
 
-[01_Preparation](https://www.notion.so/01_Preparation-2163d2a98aa880e38d11dd79c1ca16a1?pvs=21)
+[01_Preparation]
 
 [02_Single APP 배포 및 서비스 L4 연결] - Kuard
 
