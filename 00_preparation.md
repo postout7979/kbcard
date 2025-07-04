@@ -1,8 +1,3 @@
-### 접속 환경 정보
-
-- vcenter fqdn: https://vc.tanzu.lab
-- supervisor control plane IP: 172.18.10.105
-- vSphere Namespace: kbcard
 
 ### TKG cluster
 
