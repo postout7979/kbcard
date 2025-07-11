@@ -10,7 +10,7 @@ cd git
 
 sudo apt install gh -y
 
-gh repo clone https://github.com/postout7979/troubleshooting
+git clone https://github.com/postout7979/troubleshooting.git
 ```
 
 ```bash
