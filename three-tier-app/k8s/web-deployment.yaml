@@ -1,0 +1,42 @@
+# k8s/web-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deployment
+  labels:
+    app: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web-container
+        # Canary test 시, v0.1 배포 후, v0.2로 전환
+        image: harbor.tanzu.lab/library/3ta-web:v0.1 # WEB 이미지 (빌드 후 푸시 필요)
+        # public git
+#        image: postout7979/3ta-web:v0.1 # WEB 이미지 (빌드 후 푸시 필요)
+        ports:
+        - containerPort: 5000
+        env:
+        - name: AP_SERVER_URL
+          value: "http://ap-service:5001/api/items" # K8s 내부 DNS (ap-service:5001)
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        livenessProbe:
+          httpGet:
+            path: / # WEB 서버의 루트 엔드포인트
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10

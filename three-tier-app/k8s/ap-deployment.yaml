@@ -1,0 +1,53 @@
+# k8s/ap-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ap-deployment
+  labels:
+    app: ap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ap
+  template:
+    metadata:
+      labels:
+        app: ap
+    spec:
+      containers:
+      - name: ap-container
+        # Canary test 시, v0.1 배포 후, v0.2로 전환
+        image: harbor.tanzu.lab/library/3ta-ap:v0.1 # AP 이미지 (빌드 후 푸시 필요)
+        # public git
+#        image: postout7979/3ta-ap:v0.1 # AP 이미지 (빌드 후 푸시 필요)
+        ports:
+        - containerPort: 5001
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        # PostgreSQL 연결 정보
+        - name: DB_HOST
+          value: "postgres-service" # K8s 내부 DNS 이름
+        - name: DB_NAME
+          value: "app_db"
+        - name: DB_USER
+          value: "app_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials # Secret 참조
+              key: POSTGRES_PASSWORD
+        # K8s Health Check (선택 사항이지만 프로덕션에서 매우 중요)
+        livenessProbe:
+          httpGet:
+            path: /api/items # AP 서버의 엔드포인트
+            port: 5001
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /api/items
+            port: 5001
+          initialDelaySeconds: 5
+          periodSeconds: 10

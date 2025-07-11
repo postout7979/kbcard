@@ -1,0 +1,42 @@
+# k8s/db-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres-container
+#        image: harbor.tanzu.lab/library/postgres
+        image: postgres # 공식 PostgreSQL 이미지 사용
+        ports:
+        - containerPort: 5432 # PostgreSQL 기본 포트
+        env:
+        - name: POSTGRES_DB # DB 이름 설정
+          value: "app_db"
+        - name: POSTGRES_USER # DB 사용자명 설정
+          value: "app_user"
+        - name: POSTGRES_PASSWORD # 비밀번호는 Secret에서 참조
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials # 위에서 정의한 Secret 이름
+              key: POSTGRES_PASSWORD     # Secret 내의 키 이름
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data # PostgreSQL 데이터가 저장되는 기본 경로
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-pvc # 위에서 정의한 PVC 참조

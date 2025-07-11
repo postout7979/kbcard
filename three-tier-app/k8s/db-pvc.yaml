@@ -1,0 +1,12 @@
+# k8s/db-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: tanzu-storage-policy
+  resources:
+    requests:
+      storage: 5Gi # PostgreSQL 데이터를 위한 충분한 스토리지 요청

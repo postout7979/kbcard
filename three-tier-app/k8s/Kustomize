@@ -1,0 +1,8 @@
+ap-deployment.yaml
+ap-service.yaml
+db-deployment.yaml
+db-pvc.yaml
+db-secret.yaml
+db-service.yaml
+web-deployment.yaml
+web-service.yaml

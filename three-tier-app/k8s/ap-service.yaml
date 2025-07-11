@@ -1,0 +1,15 @@
+# k8s/ap-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ap-service # WEB이 이 이름으로 AP에 접근
+  labels:
+    app: ap
+spec:
+  selector:
+    app: ap
+  ports:
+    - protocol: TCP
+      port: 5001
+      targetPort: 5001
+  type: ClusterIP # 클러스터 내부에서만 접근 가능
